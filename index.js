@@ -25,16 +25,30 @@ const main = async () => {
       pull_number,
     });
 
-    const responseCommitsStatuses = reviews.map(({ state }) => state);
+    const responseCommitsStatuses = reviews.reduce((acc, { user, state }) => {
+      if (acc[user.login]) {
+        acc[user.login].push(state);
+      } else {
+        acc[user.login] = [state];
+      }
+      return acc;
+    }, {});
 
-    if (responseCommitsStatuses.includes('CHANGES_REQUESTED')) {
-      await request(`POST ${url}`, {
-        data: {
-          github: pull_request_info.user.login,
-          isApproved: false,
-        },
-      });
-    }
+    const isApproved = !Object.values(responseCommitsStatuses)
+      .map(
+        (item) =>
+          (item.includes('CHANGES_REQUESTED') &&
+            item[item.length - 1] === 'APPROVED') ||
+          (!item.includes('CHANGES_REQUESTED') && item.includes('APPROVED'))
+      )
+      .includes(false);
+
+    await request(`POST ${url}`, {
+      data: {
+        github: pull_request_info.user.login,
+        isApproved,
+      },
+    });
   } catch (error) {
     console.log(error);
     core.setFailed(error.message);
