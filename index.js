@@ -27,7 +27,7 @@ const main = async () => {
 
     const responseCommitsStatuses = reviews.map(({ state }) => state);
 
-    if (responseCommitsStatuses.includes('COMMENTED') || 'CHANGES_REQUESTED') {
+    if (responseCommitsStatuses.includes('CHANGES_REQUESTED')) {
       await request(`POST ${url}`, {
         data: {
           github: pull_request_info.user.login,
